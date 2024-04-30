@@ -1,18 +1,27 @@
-from bs4 import BeautifulSoup
-import requests
-from datetime import datetime
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
+from scraper import scrape_the_verge
 
-def scrape_the_verge():
-    url = 'https://www.theverge.com/tech'
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    headlines = []
-    for headline in soup.find_all('h2', class_='c-entry-box--compact__title'):
-        title = headline.a.text.strip()
-        link = headline.a['href']
-        # Check if the article was published after January 1, 2022
-        date_str = headline.find('time')['datetime']
-        article_date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S%z")
-        if article_date >= datetime(2022, 1, 1):
-            headlines.append({'title': title, 'link': link})
-    return headlines
+class SimpleHTTPServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/headlines':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            headlines = scrape_the_verge()
+            self.wfile.write(json.dumps(headlines).encode())
+        else:
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            with open('background.html', 'rb') as file:
+                self.wfile.write(file.read())
+
+def run_server(port=8000):
+    server_address = ('', port)
+    httpd = HTTPServer(server_address, SimpleHTTPServer)
+    print(f'Server is running on port {port}')
+    httpd.serve_forever()
+
+if __name__ == '__main__':
+    run_server()
