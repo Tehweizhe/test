@@ -22,10 +22,26 @@
 </head>
 <body>
     <h1>Title Aggregator</h1>
-    <ul>
-        {% for headline in headlines %}
-        <li><a href="{{ headline.link }}" target="_blank">{{ headline.title }}</a></li>
-        {% endfor %}
+    <ul id="headlines">
+        <!-- Headlines will be inserted here dynamically -->
     </ul>
+
+    <script>
+        // Fetch headlines from the server and display them
+        fetch('/headlines')
+            .then(response => response.json())
+            .then(data => {
+                const headlinesList = document.getElementById('headlines');
+                data.forEach(headline => {
+                    const listItem = document.createElement('li');
+                    const link = document.createElement('a');
+                    link.href = headline.link;
+                    link.textContent = headline.title;
+                    link.target = '_blank';
+                    listItem.appendChild(link);
+                    headlinesList.appendChild(listItem);
+                });
+            });
+    </script>
 </body>
 </html>
