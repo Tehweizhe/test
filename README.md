@@ -1,47 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Title Aggregator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #000;
-            color: #fff;
-            padding: 20px;
-        }
-        a {
-            color: #fff;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <h1>Title Aggregator</h1>
-    <ul id="headlines">
-        <!-- Headlines will be inserted here dynamically -->
-    </ul>
+from bs4 import BeautifulSoup
+import requests
+from datetime import datetime
 
-    <script>
-        // Fetch headlines from the server and display them
-        fetch('/headlines')
-            .then(response => response.json())
-            .then(data => {
-                const headlinesList = document.getElementById('headlines');
-                data.forEach(headline => {
-                    const listItem = document.createElement('li');
-                    const link = document.createElement('a');
-                    link.href = headline.link;
-                    link.textContent = headline.title;
-                    link.target = '_blank';
-                    listItem.appendChild(link);
-                    headlinesList.appendChild(listItem);
-                });
-            });
-    </script>
-</body>
-</html>
+def scrape_the_verge():
+    url = 'https://www.theverge.com/tech'
+    response = requests.get(url)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    headlines = []
+    for headline in soup.find_all('h2', class_='c-entry-box--compact__title'):
+        title = headline.a.text.strip()
+        link = headline.a['href']
+        # Check if the article was published after January 1, 2022
+        date_str = headline.find('time')['datetime']
+        article_date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S%z")
+        if article_date >= datetime(2022, 1, 1):
+            headlines.append({'title': title, 'link': link})
+    return headlines
